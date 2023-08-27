@@ -1,10 +1,15 @@
 const express = require('express');
 const multer = require('multer');
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 const AWS = require('aws-sdk');
 const dotenv = require('dotenv');
+const cors = require('cors');
 dotenv.config();
+
+
+app.use(cors());
+app.use(express.json());
 
 AWS.config.update({
     accessKeyId: process.env.Vultr_ACCESS_KEY_ID,
@@ -35,6 +40,7 @@ app.post('/upload', upload.any(), (req, res) => {
       Key: videoFile.originalname,
       Body: videoFile.buffer,
       ACL: 'public-read',
+      ContentType: videoFile.mimetype,
     };
 
     s3.upload(params, (err, data) => {
