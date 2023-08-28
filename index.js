@@ -7,56 +7,50 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 dotenv.config();
 
-
 app.use(cors());
 app.use(express.json());
 
 AWS.config.update({
-    accessKeyId: process.env.Vultr_ACCESS_KEY_ID,
-    secretAccessKey: process.env.Vultr_SECRET_ACCESS_KEY,
-    region: process.env.Vultr_REGION,
-    endpoint: process.env.Vultr_ENDPOINT ,
-
+  accessKeyId: process.env.Vultr_ACCESS_KEY_ID,
+  secretAccessKey: process.env.Vultr_SECRET_ACCESS_KEY,
+  region: process.env.Vultr_REGION,
+  endpoint: process.env.Vultr_ENDPOINT,
 });
-
-  
 
 const s3 = new AWS.S3();
 
-const upload = multer();
+const upload = multer().single('video');
 
-app.post('/upload', upload.any(), (req, res) => {
-    const videoFiles = req.files;
-    const uploadedVideoUrls = []; // To store the URLs of successfully uploaded videos
+app.post('/upload', upload, (req, res) => {
+  const videoFile = req.file;
+  if (!videoFile) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
 
-    if (videoFiles.length === 0) {
-        return res.status(400).json({ error: 'No files uploaded' });
-      }
+  // Replace spaces in the file name with underscores
+  const cleanedFileName = videoFile.originalname.replace(/\s+/g, '_');
 
-  // Loop through the array of files and upload each one to S3
-  videoFiles.forEach((videoFile) => {
-    const params = {
-      Bucket: 'fee99',
-      Key: videoFile.originalname,
-      Body: videoFile.buffer,
-      ACL: 'public-read',
-      ContentType: videoFile.mimetype,
-    };
+  const params = {
+    Bucket: 'fee99',
+    Key: cleanedFileName, // Use the cleaned file name
+    Body: videoFile.buffer,
+    ACL: 'public-read',
+    ContentType: videoFile.mimetype,
+  };
 
-    s3.upload(params, (err, data) => {
-      if (err) {
-        console.error(`Upload failed for ${videoFile.originalname}:`, err);
-      } else {
-        const videoUrl = data.Location;
-        console.log(`Video ${videoFile.originalname} uploaded successfully:`, videoUrl);
-        uploadedVideoUrls.push(videoUrl);
-      }
-
-      // Check if all files have been processed
-      if (uploadedVideoUrls.length === videoFiles.length) {
-        return res.status(200).json({ uploadedUrls: uploadedVideoUrls });
-      }
-    });
+  s3.upload(params, (err, data) => {
+    if (err) {
+      console.error(`Upload failed for ${cleanedFileName}:`, err);
+      return res.status(500).json({ error: 'Upload failed' });
+    }
+  
+    const s3BucketUrl = `https://${params.Bucket}.${process.env.Vultr_ENDPOINT}`;
+    const videoKey = cleanedFileName;
+  
+    const videoUrl = `${s3BucketUrl}/${videoKey}`;
+  
+    console.log(`Video ${cleanedFileName} uploaded successfully:`, videoUrl);
+    return res.status(200).json({ uploadedUrl: videoUrl });
   });
 });
 
