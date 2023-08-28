@@ -17,9 +17,17 @@ AWS.config.update({
   endpoint: process.env.Vultr_ENDPOINT,
 });
 
+
 const s3 = new AWS.S3();
 
 const upload = multer().single('video');
+
+
+const server = app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});
+
+server.timeout = 900000; 
 
 app.post('/upload', upload, (req, res) => {
   const videoFile = req.file;
@@ -31,7 +39,7 @@ app.post('/upload', upload, (req, res) => {
   const cleanedFileName = videoFile.originalname.replace(/\s+/g, '_');
 
   const params = {
-    Bucket: 'fee99',
+    Bucket: 'fee999',
     Key: cleanedFileName, // Use the cleaned file name
     Body: videoFile.buffer,
     ACL: 'public-read',
@@ -54,6 +62,4 @@ app.post('/upload', upload, (req, res) => {
   });
 });
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+
