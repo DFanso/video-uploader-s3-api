@@ -1,8 +1,8 @@
 const express = require('express');
 const multer = require('multer');
 const app = express();
-const port = process.env.PORT || 3001;
-const AWS = require('aws-sdk');
+const port = process.env.PORT || 3000;
+const AWS = require('aws-sdk');0
 const dotenv = require('dotenv');
 const cors = require('cors');
 dotenv.config();
@@ -27,7 +27,7 @@ const server = app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
 
-server.timeout = 900000; 
+server.timeout = 1200000; 
 
 app.post('/upload', upload, (req, res) => {
   const videoFile = req.file;
